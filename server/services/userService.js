@@ -72,13 +72,15 @@ service.signUpService = (params) => {
   });
 }
 
-service.signInService = (params) => {
+service.logInService = (params) => {
   return new Promise((resolve, reject) => {
 
     try {
-      logger.trace('signInService started');
+      logger.trace('logInService started');
 
       const { userData } = params;
+
+
 
 
     } catch (error) {
@@ -87,6 +89,15 @@ service.signInService = (params) => {
   });
 }
 
+/**
+ * get user by Id passed in the URL params
+ * 
+ * @param {Object} params the object based to the service 
+ * @param {Object} params.userId user _id that will be used to search
+ * 
+ * @throws {ResourceNotFoundError | InternalServerError} If User not Found in the database or something wrong happens while getting the user from the database
+ * @returns {Object} result = true and user Object
+ */
 service.getUserByIdService = (params) => {
   return new Promise(async (resolve, reject) => {
 
@@ -107,6 +118,40 @@ service.getUserByIdService = (params) => {
     } catch (error) {
       reject(error);
     }
+  });
+}
+
+service.updateUserService = (params) => {
+  return new Promise(async (resolve, reject) => {
+
+    try {
+      logger.trace('updateUserService started');
+
+      const { userData, userId } = params;
+
+      let updates = Object.keys(userData);
+
+      let user = await User.findById(userId).catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while getting user' });
+      });
+
+      if (!user) {
+        throw utils.errorUtil({ userErrorMessage: 'User not found' }, { errorType: ResourceNotFoundError });
+      }
+
+      for (const update of updates) {
+        user[update] = userData[update];
+      }
+      
+      await user.save().catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+      });
+
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+
   });
 }
 

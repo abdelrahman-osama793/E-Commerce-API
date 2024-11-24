@@ -1,9 +1,9 @@
-let logger = {};
-
-const resetColor = "\x1b[31m";
+const resetColor = "\x1b[0m";
 const errorColor = "\x1b[31m";
 const traceColor = "\x1b[32m";
 const warnColor = "\x1b[33m";
+
+let logger = {};
 
 logger.error = function (message, error) {
   if (error) {

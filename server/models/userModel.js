@@ -37,6 +37,7 @@ const userSchema = mongoose.Schema(
         }
       },
     },
+    isEmailConfirmed: Boolean,
     password: {
       type: String,
       required: true,
@@ -51,6 +52,7 @@ const userSchema = mongoose.Schema(
       type: Number,
       required: false,
     },
+    isMobileConfirmed: Boolean,
     userType: {
       type: String,
       default: customerUserType,
@@ -118,19 +120,17 @@ userSchema.statics.findByCredentials = async (email, password) => {
   const user = await User.findOne({ email });
 
   if (!user) {
-    throw new Error("Invalid email or password");
+    throw utils.errorUtil({userErrorMessage: "Invalid email or password"});
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (!isMatch) {
-    throw new Error("Invalid email or password");
+    throw utils.errorUtil({userErrorMessage: "Invalid email or password"});
   }
 
   return user;
 };
-
-userSchema.statics.findAndComparePassword = async (_id, password) => { };
 
 // Hash the Password before saving the user to the database//
 // There is difference between hashing and encrypting
@@ -138,15 +138,17 @@ userSchema.statics.findAndComparePassword = async (_id, password) => { };
 userSchema.pre("save", async function (next) {
   // this plays as the saved document
   const user = this;
+
   // check if password is modified to hash it for the first time or to re-hash it
   if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8);
   }
+
   // We simply call next when we are done to let the code know that we finished the function
   next();
 });
 
-// Remove the user's tasks
+// Remove the user's related unwanted data
 userSchema.pre("remove", async function (next) {
   const user = this;
   // await Task.deleteMany({ owner: user._id });
