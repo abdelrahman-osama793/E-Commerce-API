@@ -1,0 +1,36 @@
+{
+  "name": "express-e-commenrce",
+  "version": "1.0.0",
+  "description": "e-commerce API built using node.js, express.js & mongoDB.",
+  "main": "server/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/abdelrahman-osama793/E-Commerce-API.git"
+  },
+  "author": "Abdelrahman Osama",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abdelrahman-osama793/E-Commerce-API/issues"
+  },
+  "homepage": "https://github.com/abdelrahman-osama793/E-Commerce-API#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "chai": "^5.1.2",
+    "dotenv": "^16.4.5",
+    "dotenv-extended": "^2.9.0",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.10.0",
+    "mongoose": "^8.8.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.16",
+    "nodemon": "^3.1.7",
+    "sharp": "^0.33.5",
+    "validator": "^13.12.0"
+  }
+}
