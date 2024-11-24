@@ -1,0 +1,114 @@
+{
+  "userTypes": [
+    {
+      "code": 1,
+      "label": "Customer"
+    },
+    {
+      "code": 2,
+      "label": "System Admin"
+    },
+    {
+      "code": 3,
+      "label": "Shop Owner"
+    },
+    {
+      "code": 4,
+      "label": "Shop Assistant"
+    }
+  ],
+  "productCategories": [
+    {
+      "code": 1,
+      "label": "Electronics",
+      "subcategories": [
+        {
+          "code": 1,
+          "label": "Mobiles"
+        },
+        {
+          "code": 2,
+          "label": "TVs"
+        },
+        {
+          "code": 3,
+          "label": "Power Banks"
+        },
+        {
+          "code": 4,
+          "label": "Cameras"
+        },
+        {
+          "code": 5,
+          "label": "Headphones"
+        },
+        {
+          "code": 6,
+          "label": "Gaming"
+        },
+        {
+          "code": 7,
+          "label": "Laptops"
+        },
+        {
+          "code": 8,
+          "label": "Tablets"
+        },
+        {
+          "code": 9,
+          "label": "Data Storage"
+        },
+        {
+          "code": 10,
+          "label": "Printers"
+        }
+      ]
+    },
+    {
+      "code": 2,
+      "label": "Men's Fashion"
+    },
+    {
+      "code": 3,
+      "label": "Women's Fashion"
+    },
+    {
+      "code": 4,
+      "label": "Shop Assistant"
+    },
+    {
+      "code": 5,
+      "label": "Shop Assistant"
+    },
+    {
+      "code": 6,
+      "label": "Shop Assistant"
+    },
+    {
+      "code": 7,
+      "label": "Shop Assistant"
+    }
+  ],
+  "ErrorTypesData": [
+    {
+      "code": 1,
+      "description": "Internal Server Error",
+      "value": "internal_server_error"
+    },
+    {
+      "code": 2,
+      "description": "Bad Request Error",
+      "value": "bad_request"
+    },
+    {
+      "code": 3,
+      "description": "Resource Not Found Error",
+      "value": "resource_not_found"
+    },
+    {
+      "code": 4,
+      "description": "Authorization Error",
+      "value": "authorization_error"
+    }
+  ]
+}
