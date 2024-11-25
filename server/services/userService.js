@@ -39,14 +39,38 @@ function validateUserData(params) {
   }
 }
 
+function checkIfEmailIsUsed(params) {
+  return new Promise(async (resolve, reject) => {
+
+    try {
+      logger.trace("checkIfEmailIsUsed Started");
+
+      const { email } = params;
+
+      const user = await User.findOne({ email }).catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while checking if email is used' });
+      });
+
+      if (user) {
+        throw utils.errorUtil({ userErrorMessage: 'Email is already used' }, { errorType: BadRequestError });
+      }
+
+      resolve({ result: false });
+
+    } catch (error) {
+      reject(error);
+    }
+
+  });
+}
 /**
- * sign up service to add user to the system
+ * @description sign up service to add user to the system and create token after saving successfully.
  * 
  * @param {Object} params the object based to the service 
  * @param {Object} params.userData An object that contains the data submitted to create a user
  * 
  * @throws {BadRequestError | InternalServerError} If password or email are not valid or something wrong happens while saving the user in the database
- * @returns void
+ * @returns {void}
  */
 service.signUpService = (params) => {
   return new Promise(async (resolve, reject) => {
@@ -56,12 +80,18 @@ service.signUpService = (params) => {
 
       const { userData } = params;
 
+      await checkIfEmailIsUsed({ email: userData.email });
+
       validateUserData({ userData });
 
       let user = new User(userData);
 
       await user.save().catch(error => {
         throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+      });
+
+      await user.generateAuthToken().catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
       });
 
       resolve();
@@ -72,17 +102,32 @@ service.signUpService = (params) => {
   });
 }
 
+/**
+ * @description Login service to check & authenticate: if user is in the DB and his password matches then we create JWT for authentication.
+ * 
+ * @param {Object} params the object based to the service 
+ * @param {Object} params.userData An object that contains the data submitted to create a user
+ * 
+ * @throws {BadRequestError | InternalServerError} If password or email are not valid or something wrong happens while saving the user in the database
+ * @returns {Object} An object that contains the user data and a boolean field called result = true to indicate a success response
+ */
 service.logInService = (params) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
 
     try {
       logger.trace('logInService started');
 
       const { userData } = params;
 
+      const user = await User.findByCredentials({ userData }).catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
+      });
 
+      let token = await user.generateAuthToken().catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
+      });
 
-
+      resolve({ result: true, user, token });
     } catch (error) {
       reject(error);
     }
@@ -90,13 +135,13 @@ service.logInService = (params) => {
 }
 
 /**
- * get user by Id passed in the URL params
+ * @description get user by Id passed in the URL params
  * 
  * @param {Object} params the object based to the service 
  * @param {Object} params.userId user _id that will be used to search
  * 
  * @throws {ResourceNotFoundError | InternalServerError} If User not Found in the database or something wrong happens while getting the user from the database
- * @returns {Object} result = true and user Object
+ * @returns {Object} An object that contains the user data and a boolean field called result = true to indicate a success response
  */
 service.getUserByIdService = (params) => {
   return new Promise(async (resolve, reject) => {
@@ -121,6 +166,15 @@ service.getUserByIdService = (params) => {
   });
 }
 
+/**
+ * @description get user by Id passed in the URL params
+ * 
+ * @param {Object} params the object based to the service 
+ * @param {String} params.userId user _id that will be used to search
+ * 
+ * @throws {ResourceNotFoundError | InternalServerError} If User not Found in the database or something wrong happens while getting the user from the database
+ * @returns {void}
+ */
 service.updateUserService = (params) => {
   return new Promise(async (resolve, reject) => {
 
@@ -142,7 +196,63 @@ service.updateUserService = (params) => {
       for (const update of updates) {
         user[update] = userData[update];
       }
-      
+
+      await user.save().catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+      });
+
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+
+  });
+}
+
+/**
+ * @description logout user by removing the token currently ued from the token array stored in the user database
+ * 
+ * @param {Object} params the object based to the service 
+ * @param {Object} params.user user object that is added to the req body after logging in
+ * @param {String} params.token token created & added to the req body after logging in
+ * 
+ * @throws {InternalServerError}
+ * @returns {void}
+ */
+service.logOutService = (params) => {
+  return new Promise(async (resolve, reject) => {
+
+    try {
+      logger.trace('logOutService Started');
+
+      const { user, userToken } = params;
+
+      user.tokens = user.tokens.filter((token) => {
+        return token.token !== userToken;
+      });
+
+      await user.save().catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+      });
+
+      resolve();
+    } catch (error) {
+      reject(error);
+    }
+
+  });
+}
+
+service.logOutFromAllDevicesService = (params) => {
+  return new Promise(async (resolve, reject) => {
+
+    try {
+      logger.trace('logOutService Started');
+
+      const { user } = params;
+
+      user.tokens = [];
+
       await user.save().catch(error => {
         throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
       });

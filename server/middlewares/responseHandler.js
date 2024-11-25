@@ -5,6 +5,7 @@ const InternalServeErrorCode = utils.findInArray(dataList.ErrorTypesData, 1, 'co
 const BadRequestErrorCode = utils.findInArray(dataList.ErrorTypesData, 2, 'code').value;
 const ResourceNotFoundErrorCode = utils.findInArray(dataList.ErrorTypesData, 3, 'code').value;
 const AuthorizationErrorCode = utils.findInArray(dataList.ErrorTypesData, 4, 'code').value;
+const AuthenticationErrorCode = utils.findInArray(dataList.ErrorTypesData, 5, 'code').value;
 
 function errorHandlerMiddleware(req, res, next) {
   res.handleFailureResponse = function (error) {
@@ -36,7 +37,14 @@ function errorHandlerMiddleware(req, res, next) {
       });
     }
 
-    return res.status(400).json({ result: false, message: error.message || 'An error happened' });
+    if (error.code === AuthenticationErrorCode) {
+      return res.status(error.statusCode).json({
+        result: false,
+        message: error.message
+      });
+    }
+
+    return res.status(500).json({ result: false, message: error.message || 'An error happened' });
 
   }
 

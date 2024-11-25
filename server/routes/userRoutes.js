@@ -1,11 +1,13 @@
 const express = require("express");
-// const auth = require("../middleware/auth");
+const auth = require("../middlewares/auth");
 const router = express.Router();
 const controller = require('../controllers/userController');
 
 router.post('/', controller.signUpController);
-router.get('/', controller.logInController);
-router.get('/:id', controller.getUserByIdController);
-router.patch('/:id', controller.updateUserController);
+router.get('/login', controller.logInController);
+router.get('/:id', auth, controller.getUserByIdController);
+router.patch('/:id', auth, controller.updateUserController);
+router.post('/logout', auth, controller.logOutController);
+router.post('/logoutFromAllDevices', auth, controller.logOutFromAllDevicesController);
 
 module.exports = router;
