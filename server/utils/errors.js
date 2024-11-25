@@ -1,5 +1,4 @@
 'use strict';
-const dataList = require('../data/data_list.json');
 
 class HttpError extends Error {
   constructor({ message, statusCode, code, error = '' }) {
@@ -54,9 +53,21 @@ class AuthorizationError extends HttpError {
   }
 }
 
+class AuthenticationError extends HttpError {
+  constructor(message = 'Unauthorized error', error) {
+    super({
+      message,
+      statusCode: 403,
+      code: 'authentication_error',
+      error
+    });
+  }
+}
+
 module.exports = {
   BadRequestError,
   ResourceNotFoundError,
   InternalServerError,
-  AuthorizationError
+  AuthorizationError,
+  AuthenticationError
 };

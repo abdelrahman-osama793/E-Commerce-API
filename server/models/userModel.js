@@ -5,8 +5,12 @@ const jwt = require("jsonwebtoken");
 const { Buffer } = require("safe-buffer");
 const dataList = require('../data/data_list.json');
 const utils = require("../utils/utils");
+const { BadRequestError } = require("../utils/errors");
+const logger = require("../utils/logger");
 
 const customerUserType = utils.findInArray(dataList.userTypes, 1, "code").label;
+
+const tokenString = process.env.TOKEN_STRING;
 
 // In order to take advantage of the middleware in the models
 // it is preferred to create the Schema first and then pass it to the model
@@ -57,9 +61,9 @@ const userSchema = mongoose.Schema(
       type: String,
       default: customerUserType,
     },
-    birthDate: { 
-      type: Date, 
-      required: false 
+    birthDate: {
+      type: Date,
+      required: false
     },
     avatar: {
       type: Buffer,
@@ -102,49 +106,71 @@ userSchema.methods.toJSON = function () {
 // Accessible on the instances (instance methods)
 // Once the user is created a token is created for him
 userSchema.methods.generateAuthToken = async function () {
-  const user = this;
+  try {
+    logger.trace("generateAuthToken Started");
 
-  // sign() function takes two variables the first one is the data that is going to be embedded in the token and the other is the string that is going to be encrypted 
-  const token = jwt.sign({ _id: user._id.toString() }, process.env.TOKEN_STRING);
+    const user = this;
 
-  user.tokens = user.tokens.concat({ token });
-  await user.save();
+    // sign() function takes two variables the first one is the data that is going to be embedded in the token 
+    // and the other is the string that is going to be encrypted 
+    const token = jwt.sign({ _id: user._id.toString() }, tokenString);    
 
-  return token;
+    user.tokens = user.tokens.concat({ token });
+    await user.save();
+
+    return token;
+  } catch (error) {
+    throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
+  }
 };
 
 // A new function we built specially for logging in users
 // Accessible on the model (model methods)
 // Find by email and then compare the password to make sure it's the right email and password
-userSchema.statics.findByCredentials = async (email, password) => {
-  const user = await User.findOne({ email });
+userSchema.statics.findByCredentials = async (params) => {
+  return new Promise(async (resolve, reject) => {
 
-  if (!user) {
-    throw utils.errorUtil({userErrorMessage: "Invalid email or password"});
-  }
+    try {
+      const { userData } = params;      
 
-  const isMatch = await bcrypt.compare(password, user.password);
+      const user = await User.findOne({ email: userData.email }).catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: "Error while logging in" });
+      });
 
-  if (!isMatch) {
-    throw utils.errorUtil({userErrorMessage: "Invalid email or password"});
-  }
+      if (!user) {
+        throw utils.errorUtil({ userErrorMessage: "Invalid email or password" }, { errorType: BadRequestError });
+      }
 
-  return user;
+      const isMatch = await bcrypt.compare(userData.password, user.password).catch(error => {
+        throw utils.errorUtil({ error, userErrorMessage: "Error while logging in" });
+      });
+
+      if (!isMatch) {
+        throw utils.errorUtil({ userErrorMessage: "Invalid email or password" }, { errorType: BadRequestError });
+      }
+
+      resolve(user)
+    } catch (error) {
+      reject(error);
+    }
+
+  });
 };
 
-// Hash the Password before saving the user to the database//
-// There is difference between hashing and encrypting
-// Hashing is one way while encryption is two ways we can decrypt the value as long as we have the key
+/** 
+ * @description a middleware that helps us manipulate data before saving until now it is responsible for
+ *              hashing password before saving to DB in case of sign up or updating the password.
+ */
 userSchema.pre("save", async function (next) {
   // this plays as the saved document
   const user = this;
 
-  // check if password is modified to hash it for the first time or to re-hash it
   if (user.isModified("password")) {
-    user.password = await bcrypt.hash(user.password, 8);
+    user.password = await bcrypt.hash(user.password, 8).catch(error => {
+      throw utils.errorUtil({ error, userErrorMessage: "Error happened while saving the data" });
+    });
   }
 
-  // We simply call next when we are done to let the code know that we finished the function
   next();
 });
 

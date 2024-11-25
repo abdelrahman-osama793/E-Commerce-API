@@ -109,6 +109,11 @@
       "code": 4,
       "description": "Authorization Error",
       "value": "authorization_error"
+    },
+    {
+      "code": 5,
+      "description": "Authentication Error",
+      "value": "authentication_error"
     }
   ]
 }
