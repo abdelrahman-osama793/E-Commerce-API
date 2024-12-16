@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Buffer } = require("safe-buffer");
@@ -12,9 +11,6 @@ const customerUserType = utils.findInArray(dataList.userTypes, 1, "code").label;
 
 const tokenString = process.env.TOKEN_STRING;
 
-// In order to take advantage of the middleware in the models
-// it is preferred to create the Schema first and then pass it to the model
-// We have two methods pre for doing something before and post for doing something after
 const userSchema = mongoose.Schema(
   {
     firstName: {
@@ -34,14 +30,11 @@ const userSchema = mongoose.Schema(
       dropDups: true,
       trim: true,
       lowercase: true,
-      // Custom Validation using validate function in mongoDB and validator package
-      validate(value) {
-        if (!validator.isEmail(value)) {
-          throw Error("Email is not correct");
-        }
-      },
     },
-    isEmailConfirmed: Boolean,
+    isEmailConfirmed: {
+      type: Boolean,
+      default: false,
+    },
     password: {
       type: String,
       required: true,
@@ -56,7 +49,10 @@ const userSchema = mongoose.Schema(
       type: Number,
       required: false,
     },
-    isMobileConfirmed: Boolean,
+    isPhoneConfirmed: {
+      type: Boolean,
+      default: false,
+    },
     userType: {
       type: String,
       default: customerUserType,
@@ -78,6 +74,10 @@ const userSchema = mongoose.Schema(
         ref: 'Order',
       }
     ],
+    shop: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Shop',
+    },
     tokens: [
       {
         token: {
@@ -113,14 +113,14 @@ userSchema.methods.generateAuthToken = async function () {
 
     // sign() function takes two variables the first one is the data that is going to be embedded in the token 
     // and the other is the string that is going to be encrypted 
-    const token = jwt.sign({ _id: user._id.toString() }, tokenString);    
+    const token = jwt.sign({ _id: user._id.toString() }, tokenString);
 
     user.tokens = user.tokens.concat({ token });
     await user.save();
 
     return token;
   } catch (error) {
-    throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
+    throw utils.errorUtil({ error, message: 'Error while logging in' });
   }
 };
 
@@ -131,22 +131,22 @@ userSchema.statics.findByCredentials = async (params) => {
   return new Promise(async (resolve, reject) => {
 
     try {
-      const { userData } = params;      
+      const { userData } = params;
 
       const user = await User.findOne({ email: userData.email }).catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: "Error while logging in" });
+        throw utils.errorUtil({ error, message: "Error while logging in" });
       });
 
       if (!user) {
-        throw utils.errorUtil({ userErrorMessage: "Invalid email or password" }, { errorType: BadRequestError });
+        throw utils.errorUtil({ message: "Invalid email or password" }, { errorType: BadRequestError });
       }
 
       const isMatch = await bcrypt.compare(userData.password, user.password).catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: "Error while logging in" });
+        throw utils.errorUtil({ error, message: "Error while logging in" });
       });
 
       if (!isMatch) {
-        throw utils.errorUtil({ userErrorMessage: "Invalid email or password" }, { errorType: BadRequestError });
+        throw utils.errorUtil({ message: "Invalid email or password" }, { errorType: BadRequestError });
       }
 
       resolve(user)
@@ -167,7 +167,7 @@ userSchema.pre("save", async function (next) {
 
   if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8).catch(error => {
-      throw utils.errorUtil({ error, userErrorMessage: "Error happened while saving the data" });
+      throw utils.errorUtil({ error, message: "Error happened while saving the data" });
     });
   }
 

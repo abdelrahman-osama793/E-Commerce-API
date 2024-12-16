@@ -74,19 +74,59 @@
     },
     {
       "code": 4,
-      "label": "Shop Assistant"
+      "label": "Kitchen"
     },
     {
       "code": 5,
-      "label": "Shop Assistant"
+      "label": "Books"
     },
     {
       "code": 6,
-      "label": "Shop Assistant"
+      "label": "Sports"
     },
     {
       "code": 7,
-      "label": "Shop Assistant"
+      "label": "Stationary"
+    },
+    {
+      "code": 8,
+      "label": "Eyewears",
+      "subcategories": [
+        {
+          "code": 1,
+          "label": "Sunglasses"
+        },
+        {
+          "code": 2,
+          "label": "Eyeglasses"
+        }
+      ]
+    },
+    {
+      "code": 9,
+      "label": "Watches",
+      "subcategories": [
+        {
+          "code": 1,
+          "label": "Analog Watches"
+        },
+        {
+          "code": 2,
+          "label": "Chronograph Watches"
+        },
+        {
+          "code": 3,
+          "label": "Digital Watches"
+        },
+        {
+          "code": 4,
+          "label": "Smart Watches"
+        }
+      ]
+    },
+    {
+      "code": 10,
+      "label": "Health"
     }
   ],
   "ErrorTypesData": [

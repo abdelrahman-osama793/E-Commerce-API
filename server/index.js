@@ -6,25 +6,25 @@ require("./db/connection");
 const express = require("express");
 const morgan = require('morgan');
 const userRoutes = require("./routes/userRoutes");
+const shopRoutes = require("./routes/shopRoutes");
 const productRoutes = require("./routes/productRoutes");
 const cartRoutes = require("./routes/cartRoutes");
 const errorHandlerMiddleware = require("./middlewares/responseHandler");
+const utils = require("./utils/utils");
+const { ResourceNotFoundError } = require("./utils/errors");
 const app = express();
 const port = process.env.PORT || 8888;
-// const auth = require("../middleware/auth");
-
-// const NUM_OF_CPUS = process.env.clusters || 4;
 
 app.use(errorHandlerMiddleware)
 app.use(morgan('dev'))
 app.use(express.json());
 app.use("/api/user", userRoutes);
-// app.use("/api/product", productRoutes);
+app.use("/api/shop", shopRoutes);
+app.use("/api/product", productRoutes);
 // app.use("/api/cart", cartRoutes);
-  
+
 app.use((req, res, next) => {
-  const error = new Error('Not Found!');
-  error.status = 404;
+  const error = utils.errorUtil({ message: 'Not Found!' }, { errorType: ResourceNotFoundError });
   next(error);
 });
 

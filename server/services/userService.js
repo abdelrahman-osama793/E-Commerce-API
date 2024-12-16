@@ -1,7 +1,8 @@
 const User = require("../models/userModel");
-const { BadRequestError, InternalServerError, ResourceNotFoundError } = require("../utils/errors");
+const { BadRequestError, ResourceNotFoundError } = require("../utils/errors");
 const logger = require("../utils/logger");
 const utils = require("../utils/utils");
+const dataList = require("../data/data_list.json");
 
 let service = {};
 
@@ -23,19 +24,19 @@ function validateUserData(params) {
     let isPasswordValid = utils.checkIfStrongPassword({ password: userData.password });
 
     if (!isPasswordValid.valid) {
-      throw utils.errorUtil({ userErrorMessage: 'Email or password are not valid' }, { errorType: BadRequestError });
+      throw utils.errorUtil({ message: 'Email or password are not valid' }, { errorType: BadRequestError });
     }
 
     let isEmailValid = utils.checkIfEmailIsValid({ email: userData.email });
 
     if (!isEmailValid) {
-      throw utils.errorUtil({ userErrorMessage: 'Email or password are not valid' }, { errorType: BadRequestError });
+      throw utils.errorUtil({ message: 'Email or password are not valid' }, { errorType: BadRequestError });
     }
 
     return true;
 
   } catch (error) {
-    throw utils.errorUtil({ error, userErrorMessage: "Error while validating user data" });
+    throw utils.errorUtil({ error, message: "Error while validating user data" });
   }
 }
 
@@ -48,11 +49,11 @@ function checkIfEmailIsUsed(params) {
       const { email } = params;
 
       const user = await User.findOne({ email }).catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while checking if email is used' });
+        throw utils.errorUtil({ error, message: 'Error while checking if email is used' });
       });
 
       if (user) {
-        throw utils.errorUtil({ userErrorMessage: 'Email is already used' }, { errorType: BadRequestError });
+        throw utils.errorUtil({ message: 'Email is already used' }, { errorType: BadRequestError });
       }
 
       resolve({ result: false });
@@ -63,6 +64,7 @@ function checkIfEmailIsUsed(params) {
 
   });
 }
+
 /**
  * @description sign up service to add user to the system and create token after saving successfully.
  * 
@@ -84,14 +86,18 @@ service.signUpService = (params) => {
 
       validateUserData({ userData });
 
+      if (userData.userType) {
+        userData.userType = utils.findInArray(dataList.userTypes, userData.userType, "code").label;
+      }
+
       let user = new User(userData);
 
       await user.save().catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+        throw utils.errorUtil({ error, message: 'Error while saving user' });
       });
 
       await user.generateAuthToken().catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
+        throw utils.errorUtil({ error, message: 'Error while logging in' });
       });
 
       resolve();
@@ -120,11 +126,11 @@ service.logInService = (params) => {
       const { userData } = params;
 
       const user = await User.findByCredentials({ userData }).catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
+        throw utils.errorUtil({ error, message: 'Error while logging in' });
       });
 
       let token = await user.generateAuthToken().catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while logging in' });
+        throw utils.errorUtil({ error, message: 'Error while logging in' });
       });
 
       resolve({ result: true, user, token });
@@ -152,11 +158,11 @@ service.getUserByIdService = (params) => {
       const { userId } = params;
 
       let user = await User.findById(userId).catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while getting user' });
+        throw utils.errorUtil({ error, message: 'Error while getting user' });
       });
 
       if (!user) {
-        throw utils.errorUtil({ userErrorMessage: 'User not found' }, { errorType: ResourceNotFoundError });
+        throw utils.errorUtil({ message: 'User not found' }, { errorType: ResourceNotFoundError });
       }
 
       resolve({ result: true, user });
@@ -186,11 +192,11 @@ service.updateUserService = (params) => {
       let updates = Object.keys(userData);
 
       let user = await User.findById(userId).catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while getting user' });
+        throw utils.errorUtil({ error, message: 'Error while getting user' });
       });
 
       if (!user) {
-        throw utils.errorUtil({ userErrorMessage: 'User not found' }, { errorType: ResourceNotFoundError });
+        throw utils.errorUtil({ message: 'User not found' }, { errorType: ResourceNotFoundError });
       }
 
       for (const update of updates) {
@@ -198,7 +204,7 @@ service.updateUserService = (params) => {
       }
 
       await user.save().catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+        throw utils.errorUtil({ error, message: 'Error while saving user' });
       });
 
       resolve();
@@ -232,7 +238,7 @@ service.logOutService = (params) => {
       });
 
       await user.save().catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+        throw utils.errorUtil({ error, message: 'Error while saving user' });
       });
 
       resolve();
@@ -243,6 +249,15 @@ service.logOutService = (params) => {
   });
 }
 
+/**
+ * @description logout user by removing all tokens in the token array stored in the user database
+ * 
+ * @param {Object} params the object based to the service 
+ * @param {Object} params.user user object that is added to the req body after logging in
+ * 
+ * @throws {InternalServerError}
+ * @returns {void}
+ */
 service.logOutFromAllDevicesService = (params) => {
   return new Promise(async (resolve, reject) => {
 
@@ -254,7 +269,7 @@ service.logOutFromAllDevicesService = (params) => {
       user.tokens = [];
 
       await user.save().catch(error => {
-        throw utils.errorUtil({ error, userErrorMessage: 'Error while saving user' });
+        throw utils.errorUtil({ error, message: 'Error while saving user' });
       });
 
       resolve();
