@@ -63,7 +63,7 @@ utils.checkIfStrongPassword = function (params, options) {
     return { valid: true };
 
   } catch (error) {
-    throw this.errorUtil({error, userErrorMessage: 'Error while checking if password is strong'})
+    throw this.errorUtil({error, message: 'Error while checking if password is strong'})
   }
 }
 
@@ -84,7 +84,7 @@ utils.checkIfEmailIsValid = function (params, options) {
     return emailRegex.test(email);
 
   } catch (error) {
-    throw this.errorUtil({error, userErrorMessage: 'Error while checking if email is valid'})
+    throw this.errorUtil({error, message: 'Error while checking if email is valid'})
   }
 }
 
@@ -93,24 +93,24 @@ utils.checkIfEmailIsValid = function (params, options) {
  * 
  * @param {Object} params Object required to run the function
  * @param {String} params.error error object based
- * @param {String} params.userErrorMessage a string passed as a password needed to run the function
+ * @param {String} params.message a string passed as a password needed to run the function
  * @param {Object} options optional Object is used for manipulating the default behavior of the function
  * @param {Object} options.errorType the type of the error that will be used (internal server error, etc...)
  * @returns {Object} an object indicating whether the password is valid or not and why
  * @throws {InternalServerError}
  */
-utils.errorUtil = ({ error = {}, userErrorMessage = 'An unexpected error occurred. Please try again later.' }, options = {}) => {
+utils.errorUtil = ({ error = {}, message = 'An unexpected error occurred. Please try again later.' }, options = {}) => {
   const { errorType } = options;
 
   if (error instanceof Error) {
     return error;
   };
 
-  logger.error(userErrorMessage, error);
+  logger.error(message, error);
 
   const thrownErrorType = ((errorType || {}).prototype && (errorType.prototype instanceof Error)) ? errorType : InternalServerError;
 
-  const thrownError = new thrownErrorType(userErrorMessage);
+  const thrownError = new thrownErrorType(message);
 
   return thrownError;
 },

@@ -8,7 +8,7 @@ controller.signUpController = async function (req, res) {
     logger.trace("signUpController started");
 
     let params = {
-      userData: req.body.userData,
+      userData: req.body.data,
     };
 
     await userService.signUpService(params);
@@ -24,12 +24,24 @@ controller.logInController = async function (req, res) {
     logger.trace("signInController started");
 
     let params = {
-      userData: req.body.userData,
+      userData: req.body.data,
     };
 
     let response = await userService.logInService(params);
 
     res.json(response);
+  } catch (error) {
+    res.handleFailureResponse(error);
+  }
+}
+
+controller.getUserProfile = async function (req, res) {
+  try {
+    
+    logger.trace("getUserProfile started");
+
+    res.json(req.user);
+
   } catch (error) {
     res.handleFailureResponse(error);
   }
@@ -57,7 +69,7 @@ controller.updateUserController = async function (req, res) {
 
     let params = {
       userId: req.params.id,
-      userData: req.body.userData,
+      userData: req.body.data,
     };
 
     await userService.updateUserService(params);
